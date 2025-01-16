@@ -39,7 +39,7 @@
             <code>
               <a href="{{ result.commit.repo_url }}">{{ result.commit.repo_url }}</a>,
               commit {{ result.ui_commit_url_anchor() |safe }}
-              ({{ result.commit.timestamp.strftime("%Y-%m-%d") }})
+              ({{ result.commit.timestamp.strftime("%Y-%m-%d") if result.commit.timestamp else "N/A" }})
             </code>
           {% else %}
             commit info unavailable
