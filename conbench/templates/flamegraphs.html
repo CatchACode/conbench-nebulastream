@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Flamegraph</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background-color: #1f1a3f;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e1e6f4;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>NebulaStream Conbench</header>
+
+    <div class="container">
+        <h1>CI runs</h1>
+        <p>Recent CI runs for <strong>nebulastream/nebulastream</strong></p>
+
+        <table id="ciTable">
+            <thead>
+                <tr>
+                    <th>time</th>
+                    <th>results</th>
+                    <th>reason</th>
+                    <th>hardware</th>
+                </tr>
+                <tr>
+                    <th><input type="text" id="timeFilter" class="filter-input" placeholder="Filter time..."></th>
+                    <th>
+                        <select id="resultsFilter" class="filter-input">
+                            <option value="">All</option>
+                            <option value="1">1</option>
+                            <option value="40">40</option>
+                            <option value="n/a">n/a</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select id="reasonFilter" class="filter-input">
+                            <option value="">All</option>
+                            <option value="Nightly Benchmark">Nightly Benchmark</option>
+                            <option value="Testing conbench hotfix">Testing conbench hotfix</option>
+                            <option value="test">test</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select id="hardwareFilter" class="filter-input">
+                            <option value="">All</option>
+                            <option value="Github Runner">Github Runner</option>
+                            <option value="Some Cool Machine">Some Cool Machine</option>
+                        </select>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Leere Zeile als Platzhalter -->
+                {% for run in runs %}
+                <tr>
+                    <td>{{ run.timestamp }}</td>
+                    <td>{{ run.result }}</td>
+                    <td>{{ run.reason }}</td>
+                    <td>{{ run.hardware }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center; color: #777;">Keine Daten verfügbar</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const timeInput = document.getElementById('timeFilter');
+        const resultsSelect = document.getElementById('resultsFilter');
+        const reasonSelect = document.getElementById('reasonFilter');
+        const hardwareSelect = document.getElementById('hardwareFilter');
+        const tbody = document.getElementById('ciTable').getElementsByTagName('tbody')[0];
+
+        function filterTable() {
+            const timeFilter = timeInput.value.toLowerCase();
+            const resultsFilter = resultsSelect.value;
+            const reasonFilter = reasonSelect.value.toLowerCase();
+            const hardwareFilter = hardwareSelect.value.toLowerCase();
+
+            let anyVisible = false;
+
+            for (const row of tbody.rows) {
+                if (row.cells.length !== 4) continue;
+
+                const time = row.cells[0].innerText.toLowerCase();
+                const results = row.cells[1].innerText;
+                const reason = row.cells[2].innerText.toLowerCase();
+                const hardware = row.cells[3].innerText.toLowerCase();
+
+                const match =
+                    time.includes(timeFilter) &&
+                    (!resultsFilter || results === resultsFilter) &&
+                    (!reasonFilter || reason === reasonFilter) &&
+                    (!hardwareFilter || hardware === hardwareFilter);
+
+                row.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            }
+            if (!anyVisible) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #777;">Keine passenden Ergebnisse</td></tr>';
+            }
+        }
+        timeInput.addEventListener('input', filterTable);
+        resultsSelect.addEventListener('change', filterTable);
+        reasonSelect.addEventListener('change', filterTable);
+        hardwareSelect.addEventListener('change', filterTable);
+    </script>
+</body>
+
+</html>

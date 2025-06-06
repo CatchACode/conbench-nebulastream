@@ -9,6 +9,7 @@ import flask_login
 import werkzeug
 
 from ..buildinfo import BUILD_INFO
+from conbench.app import app
 
 log = logging.getLogger(__name__)
 

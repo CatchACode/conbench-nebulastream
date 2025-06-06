@@ -10,6 +10,7 @@ from .auth import *  # noqa
 from .batches import *  # noqa
 
 # register routes
+from .flamegraphs import *
 from .benchmarks import *  # noqa
 from .compare import *  # noqa
 from .hardware import *  # noqa
