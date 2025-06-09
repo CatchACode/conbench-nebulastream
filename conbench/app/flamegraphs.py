@@ -42,7 +42,7 @@ def flame_graphs():
             "hardware": "Github Runner"
         }
     ]
-    return flask.render_template("flamegraphs.html", runs = runs, person = "Sheikh ALI Tareq MUSAWIE")
+    return flask.render_template("flamegraphs.html", runs = runs)
 
 @app.route("/upload-flamegraph")
 def upload_fg():

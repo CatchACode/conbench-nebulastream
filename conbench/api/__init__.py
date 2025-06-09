@@ -10,7 +10,6 @@ import flask as f
 api: f.Blueprint = f.Blueprint("api", __name__)
 rule: Callable = api.add_url_rule
 
-
 from ._errors import *  # noqa
 from .auth import *  # noqa
 from .commits import *  # noqa
