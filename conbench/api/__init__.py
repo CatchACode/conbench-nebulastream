@@ -22,3 +22,4 @@ from .info import *  # noqa
 from .results import *  # noqa
 from .runs import *  # noqa
 from .users import *  # noqa
+from .flamegraph import *

@@ -20,7 +20,7 @@ from conbench.bmrt import BMRTBenchmarkResult, TBenchmarkName, bmrt_cache
 from conbench.config import Config
 from conbench.outlier import remove_outliers_by_iqrdist
 
-@app.route("/flamegraph")
+@app.route("/flamegraphs", methods=["GET"])
 def flame_graphs():
     runs = [
         {
@@ -44,6 +44,6 @@ def flame_graphs():
     ]
     return flask.render_template("flamegraphs.html", runs = runs)
 
-@app.route("/upload-flamegraph")
+@app.route("/upload-flamegraph", methods=["GET", "POST"])
 def upload_fg():
     return flask.render_template("uploadFlamegraphs.html")
