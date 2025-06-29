@@ -22,27 +22,23 @@ from conbench.outlier import remove_outliers_by_iqrdist
 
 @app.route("/flamegraphs", methods=["GET"])
 def flame_graphs():
-    runs = [
+    runs = {"nebulastream/test": [
         {
-            "timestamp": "2025-06-01 10:00",
-            "result": "40",
-            "reason": "Nightly Benchmark",
-            "hardware": "Github Runner"
-        },
-        {
-            "timestamp": "2025-06-02 12:30",
-            "result": "1",
-            "reason": "Testing conbench hotfix",
-            "hardware": "Some Cool Machine"
-        },
-        {
-            "timestamp": "2025-06-03 09:15",
-            "result": "n/a",
-            "reason": "test",
-            "hardware": "Github Runner"
+            "run_id" : 1,
+            "time_for_table": 1,
+            "result_count": 0,
+            "run_reason": "dict",
+            "hardware_name": "Python Dict",
+            "commit": {
+                "author_avatar_url": None,
+                "author_name": "Python Dict",
+                "commit_url": "https://google.com",
+                "hash": "1234567890",
+                "commit_message_short": "Short commit message from the python Dict",
+            }
         }
-    ]
-    return flask.render_template("flamegraphs.html", runs = runs)
+    ]}
+    return flask.render_template("flamegraphs.html", reponame_runs_map_sorted = runs)
 
 @app.route("/upload-flamegraph", methods=["GET", "POST"])
 def upload_fg():
