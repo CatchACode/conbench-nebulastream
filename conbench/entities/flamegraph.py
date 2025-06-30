@@ -32,6 +32,8 @@ class Flamegraph(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     run_id: Mapped[str] = mapped_column(String, nullable=False)
 
+    run_reason: Mapped[Optional[str]] = Nullable(s.Text)
+
     commit_id: Mapped[Optional[str]] = Nullable(s.ForeignKey("commit.id"))
     commit: Mapped[Optional[Commit]] = relationship("Commit", lazy="joined")
 
