@@ -1,0 +1,81 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+
+# curl -X 'POST'
+#  'http://127.0.0.1:5000/api/flamegraphs/'
+#  -H 'accept: */*'
+#  -H 'Content-Type: application/json'
+#  -d '{
+#  "github": {
+#    "branch": "string",
+#    "commit": "string",
+#    "pr_number": 0,
+#    "repository": "https://github.com/nebulastream/nebulastream"
+#  },
+#  "machine_info": {
+#    "architecture_name": "string",
+#    "cpu_core_count": 0,
+#    "cpu_frequency_max_hz": 0,
+#    "cpu_l1d_cache_bytes": 0,
+#    "cpu_l1i_cache_bytes": 0,
+#    "cpu_l2_cache_bytes": 0,
+#    "cpu_l3_cache_bytes": 0,
+#    "cpu_model_name": "string",
+#    "cpu_thread_count": 0,
+#    "gpu_count": 0,
+#    "gpu_product_names": [
+#      "string"
+#    ],
+#    "kernel_name": "string",
+#    "memory_bytes": 0,
+#    "name": "string",
+#    "os_name": "string",
+#    "os_version": "string"
+#  },
+#  "name": "string",
+#  "run_id": "string",
+#  "run_reason": "string",
+#  "timestamp": "2025-07-02T17:01:03.214Z"
+#}'
+POST http://127.0.0.1:5000/api/flamegraphs/
+accept: */*
+Content-Type: application/json
+
+{
+  "github": {
+    "branch": "string",
+    "commit": "string",
+    "pr_number": 0,
+    "repository": "https://github.com/nebulastream/nebulastream"
+  },
+  "machine_info": {
+    "architecture_name": "string",
+    "cpu_core_count": 0,
+    "cpu_frequency_max_hz": 0,
+    "cpu_l1d_cache_bytes": 0,
+    "cpu_l1i_cache_bytes": 0,
+    "cpu_l2_cache_bytes": 0,
+    "cpu_l3_cache_bytes": 0,
+    "cpu_model_name": "string",
+    "cpu_thread_count": 0,
+    "gpu_count": 0,
+    "gpu_product_names": [
+      "string"
+    ],
+    "kernel_name": "string",
+    "memory_bytes": 0,
+    "name": "string",
+    "os_name": "string",
+    "os_version": "string"
+  },
+  "name": "string",
+  "run_id": "string",
+  "run_reason": "string",
+  "timestamp": "2025-07-02T17:01:03.214Z"
+}
+
+###
+
