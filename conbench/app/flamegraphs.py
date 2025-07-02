@@ -21,6 +21,7 @@ from conbench.app import app
 from conbench.app._endpoint import authorize_or_terminate
 from conbench.bmrt import BMRTBenchmarkResult, TBenchmarkName, bmrt_cache
 from conbench.config import Config
+from conbench.dbsession import current_session
 from conbench.outlier import remove_outliers_by_iqrdist
 from conbench.entities.flamegraph import Flamegraph
 
@@ -62,6 +63,8 @@ def flame_graphs():
             }
         }
     ]
+    query = select(Flamegraph).order_by(Flamegraph.run_id.desc()).limit(100)
+    flamegraphs = [r.to_dict_for_json_api() for r in current_session.scalars(query).all()]
 
     return flask.render_template("flamegraphs.html", flamegraphs=flamegraphs, application=Config.APPLICATION_NAME, title="Flamegraphs")
 

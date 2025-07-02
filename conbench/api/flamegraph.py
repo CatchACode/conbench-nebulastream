@@ -20,9 +20,10 @@ from ..api._endpoint import ApiEndpoint, maybe_login_required
 from ._resp import json_response_for_byte_sequence, resp400
 
 from ..dbsession import current_session  
-from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema
+from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
 class FlamegraphListAPI(ApiEndpoint):
+    serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
     
     def get(self) -> f.Response:
@@ -105,6 +106,7 @@ class FlamegraphListAPI(ApiEndpoint):
                   - file
                   - name
                   - run_id
+                  - github
                 properties:
                   file:
                     type: string
@@ -116,40 +118,46 @@ class FlamegraphListAPI(ApiEndpoint):
                   run_id:
                     type: string
                     description: The ID of the run this flamegraph belongs to.
+                  run_reason:
+                    type: string
+                    description: A reason for the run
+                  timestamp:
+                    type: string
+                    description: Timestamp of the run
+                    format: iso
+                  machine_info:
+                    type: string
+                    description: JSON string with machine information. Precisely one of `machine_info` and `cluster_info` must be provided.
+                  cluster_info:
+                    type: string
+                    description: JSON string with cluster information. Precisely one of `machine_info` and `cluster_info` must be provided.
+                  github:
+                    type: string
+                    description: JSON string with GitHub commit information.
         responses:
           201:
             description: Successfully uploaded
         tags:
           - Flamegraphs
         """
+        form_data = f.request.form.to_dict()
+
         if "file" not in f.request.files:
             self.abort_400_bad_request("Flamegraph file missing")
 
         file = f.request.files["file"]
         if not file or not file.filename.endswith(".svg"):
             self.abort_400_bad_request("File format must be an SVG")
-
-        name = f.request.form.get("name")
-        run_id = f.request.form.get("run_id")
-
-        if not name or not run_id:
-            self.abort_400_bad_request("Missing name or run_id.")
-
         timestamp = int(time.time())
         save_path = os.path.join("/tmp/flamegraphs", f"{timestamp}_{file.filename}")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         file.save(save_path)
 
-        fg = Flamegraph(name=name, file_path=save_path, run_id=run_id)
-        current_session.add(fg)
-        current_session.commit()
+        data_dict = Flamegraph.validate_formdata(form_data)
+        flamegraph = Flamegraph.create(data_dict)
 
-        return f.jsonify({
-            "status": "uploaded",
-            "file_path": save_path,
-            "name": name,
-            "run_id": run_id,
-        }), 201
+
+        return self.response_201_created(self.serializer.one.dump(flamegraph))
 
 class FlamegraphEntityAPI(ApiEndpoint):
     def get(self) -> f.Response:

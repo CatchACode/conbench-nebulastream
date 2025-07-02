@@ -3,9 +3,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import sqlalchemy as s
+from datetime import datetime, timezone
 
 import conbench.util
 import conbench.units
+from .benchmark_result import commit_fetch_info_and_create_in_db_if_not_exists, SchemaGitHubCreate
+from .hardware import HardwareSerializer
 from ..entities._entity import (
     Base,
     EntityMixin,
@@ -24,18 +27,121 @@ from ..entities.commit import (
     get_github_commit_metadata,
 )
 
-class Flamegraph(Base):
+from ..entities.hardware import (
+    Cluster,
+    ClusterSchema,
+    Hardware,
+    HardwareSerializer,
+    Machine,
+    MachineSchema,
+)
+
+class Flamegraph(Base, EntityMixin):
     __tablename__ = "flamegraph"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Name of the flamegraph, e.g. "Nexmark"
     name: Mapped[str] = mapped_column(String, nullable=False)
+    # Path to the flamegraph file, from the directory where they are saved.
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+    # An arbitrary string to group results by CI run. There are no assertions that this
+    # string is non-empty.
     run_id: Mapped[str] = mapped_column(String, nullable=False)
 
     run_reason: Mapped[Optional[str]] = Nullable(s.Text)
 
     commit_id: Mapped[Optional[str]] = Nullable(s.ForeignKey("commit.id"))
     commit: Mapped[Optional[Commit]] = relationship("Commit", lazy="joined")
+
+    # Non-empty URL to the repository without trailing slash.
+    # Note(JP): maybe it is easier to think of this as just "repo_url" because
+    # while it is not required that each result is associated with a particular
+    # commit, but instead it is required to be associated with a (one!) code
+    # repository as identified by its user-given repository URL.
+    commit_repo_url: Mapped[str] = NotNull(s.Text)
+
+    hardware_id: Mapped[str] = NotNull(s.String(50), s.ForeignKey("hardware.id"))
+    hardware: Mapped[Hardware] = relationship("Hardware", lazy="joined")
+
+    @staticmethod
+    def create(data_dict) -> "Flamegraph":
+        """
+        Create a Flamegraph entity from the provided data dictionary.
+        This is assumed to be called after the form data has been validated using 'validate_formdata'.
+        """
+        flamegraph = Flamegraph(**data_dict)
+        flamegraph.save()
+
+    @staticmethod
+    def validate_formdata(formdata: Dict[str, Any]) -> Dict[str, Any]:
+        if formdata["cluster_info"] is not "" and formdata["machine_info"] is not "":
+            raise ValueError(
+                "Exactly one of `machine_info` and `cluster_info` must be provided."
+            )
+        elif formdata["cluster_info"] is not "":
+            hardware = Cluster.get_or_create(formdata["cluster_info"])
+        elif formdata["machine_info"] is not "":
+            hardware = Machine.get_or_create(formdata["machine_info"])
+        else:
+            raise ValueError(
+                "Exactly one of `machine_info` and `cluster_info` must be provided."
+            )
+
+        if "github" not in formdata:
+            raise ValueError(
+                "GitHub commit information is required. Please provide `github` field."
+            )
+        user_given_commit_info: TypeCommitInfoGitHub = formdata["github"]
+        repo_url = user_given_commit_info["repo_url"]
+        commit = None
+        if user_given_commit_info["commit_hash"] is not None:
+            commit = commit_fetch_info_and_create_in_db_if_not_exists(
+                user_given_commit_info
+            )
+        if "run_id" not in formdata:
+            raise ValueError("Run ID is required. Please provide `run_id` field.")
+        if "timestamp" not in formdata:
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        else:
+            try:
+                datetime.strptime(formdata["timestamp"], "%Y-%m-%d %H:%M:%S UTC")
+                timestamp = formdata["timestamp"]
+            except ValueError:
+                raise ValueError(
+                    "Timestamp must be in the format 'YYYY-MM-DD HH:MM:SS UTC'."
+                )
+        return {
+            "run_id": formdata["run_id"],
+            "run_reason": formdata["run_reason"] if "run_reason" in formdata else None,
+            "timestamp": timestamp,
+            "hardware_id": hardware.id,
+            "commit_id": commit.id if commit else None,
+            "commit_repo_url": repo_url,
+        }
+
+    def to_dict_for_json_api(flamegraph, include_joins=True):
+        out_dict = {
+            "id": flamegraph.id,
+            "name": flamegraph.name,
+            "file_path": flamegraph.file_path,
+            "run_id": flamegraph.run_id,
+            "run_reason": flamegraph.run_reason,
+        }
+
+        if include_joins:
+            if flamegraph.commit:
+                commit_dict = CommitSerializer().many._dump(flamegraph.commit)
+                commit_dict.pop("links", None)
+            else:
+                commit_dict = None
+
+            hard_ware_dict = HardwareSerializer().one.dump(flamegraph.hardware)
+            hard_ware_dict.pop("links", None)
+
+            out_dict["commit"] = commit_dict
+            out_dict["hardware"] = hard_ware_dict
+
+            return out_dict
 
 
 class _FlamegraphsCreateSchema(marshmallow.Schema):
@@ -64,9 +170,100 @@ class _FlamegraphsCreateSchema(marshmallow.Schema):
             )
         },
     )
-    commit_id = marshmallow.fields.String(allow_none=True)
+    run_reason = marshmallow.fields.String(
+        required=False,
+        metadata={
+            "description": conbench.util.dedent_rejoin(
+                """
+                Reason for the run (optional, does not need to be unique). A
+                low-cardinality tag like `"commit"` or `"pull-request"`, used to group
+                and filter runs, with special treatment in the UI and API.
 
+                The Conbench UI and API assume that all benchmark results with the same
+                `run_id` share the same `run_reason`. There is no technical enforcement
+                of this on the server side, so some behavior may not work as intended if
+                this assumption is broken by the client.
+                """
+            )
+        },
+    )
+    # `AwareDateTime` with `default_timezone` set to UTC: naive datetimes are
+    # set this timezone.
+    timestamp = marshmallow.fields.AwareDateTime(
+        required=True,
+        format="iso",
+        default_timezone=timezone.utc,
+        metadata={
+            "description": conbench.util.dedent_rejoin(
+                """
+                A datetime string indicating the time at which the benchmark
+                was started. Expected to be in ISO 8601 notation.
+                Timezone-aware notation recommended. Timezone-naive strings are
+                interpreted in UTC. Fractions of seconds can be provided but
+                are not returned by the API. Example value:
+                2022-11-25T22:02:42Z. This timestamp defines the default
+                sorting order when viewing a list of benchmarks via the UI or
+                when enumerating benchmarks via the /api/benchmarks/ HTTP
+                endpoint.
+                """
+            )
+        },
+    )
+    machine_info = marshmallow.fields.Nested(
+        MachineSchema().create,
+        required=False,
+        metadata={
+            "description": conbench.util.dedent_rejoin(
+                """
+                Precisely one of `machine_info` and `cluster_info` must be provided.
 
+                The Conbench UI and API assume that all benchmark results with the same
+                `run_id` share the same hardware. There is no technical enforcement of
+                this on the server side, so some behavior may not work as intended if
+                this assumption is broken by the client.
+                """
+            )
+        },
+    )
+    cluster_info = marshmallow.fields.Nested(
+        ClusterSchema().create,
+        required=False,
+        metadata={
+            "description": conbench.util.dedent_rejoin(
+                """
+                Precisely one of `machine_info` and `cluster_info` must be provided.
+
+                The Conbench UI and API assume that all benchmark results with the same
+                `run_id` share the same hardware. There is no technical enforcement of
+                this on the server side, so some behavior may not work as intended if
+                this assumption is broken by the client.
+                """
+            )
+        },
+    )
+    github = marshmallow.fields.Nested(
+        SchemaGitHubCreate(),
+        required=True,
+        metadata={
+            "description": conbench.util.dedent_rejoin(
+                """
+                GitHub-flavored commit information. Required.
+
+                Use this object to tell Conbench with which specific state of
+                benchmarked code (repository identifier, possible commit hash) the
+                BenchmarkResult is associated.
+                """
+            )
+        },
+    )
 
 class FlamegraphFacadeSchema:
     create = _FlamegraphsCreateSchema()
+
+class _Serializer(EntitySerializer):
+    def _dump(self, benchmark_result):
+        return Flamegraph.to_dict_for_json_api()
+
+class FlamegraphSerializer(EntitySerializer):
+    one = _Serializer()
+    many = _Serializer(many=True)
