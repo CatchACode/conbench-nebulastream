@@ -114,7 +114,7 @@ class BenchmarkListAPI(ApiEndpoint, BenchmarkValidationMixin):
     serializer = BenchmarkResultSerializer()
     schema = BenchmarkResultFacadeSchema()
 
-    @maybe_login_required
+    #@maybe_login_required
     def get(self) -> f.Response:
         """
         ---
@@ -275,7 +275,7 @@ class BenchmarkListAPI(ApiEndpoint, BenchmarkValidationMixin):
 
         return json_response_for_byte_sequence(jsonbytes, 200)
 
-    @flask_login.login_required
+    #@flask_login.login_required
     def post(self) -> f.Response:
         """
         ---

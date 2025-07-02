@@ -13,6 +13,7 @@ import orjson
 import pandas as pd
 from sqlalchemy import select
 from conbench.app import app
+from werkzeug.utils import secure_filename
 
 from ..api._docs import spec
 from ..api import rule
@@ -22,7 +23,18 @@ from ._resp import json_response_for_byte_sequence, resp400
 from ..dbsession import current_session  
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
-class FlamegraphListAPI(ApiEndpoint):
+UPLOAD_FOLDER = '/tmp/flamegraphs'
+ALLOWED_EXTENSIONS = {'svg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+class FlamegraphValidationMixin:
+    def validate_flamegraph(self, schema):
+        return self.validate(schema)
+
+class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
     
@@ -89,7 +101,7 @@ class FlamegraphListAPI(ApiEndpoint):
     def post(self):
         """
         ---
-        summary: Upload a flamegraph SVG file
+        summary: Upload a flamegraph metadata
         description: |
           Submit a Flamegraph within a specific run.
 
@@ -99,62 +111,19 @@ class FlamegraphListAPI(ApiEndpoint):
         requestBody:
           required: true
           content:
-            multipart/form-data:
-              schema:
-                type: object
-                required:
-                  - file
-                  - name
-                  - run_id
-                  - github
-                properties:
-                  file:
-                    type: string
-                    format: binary
-                    description: The SVG file of the flamegraph to upload.
-                  name:
-                    type: string
-                    description: A human-readable name for the flamegraph.
-                  run_id:
-                    type: string
-                    description: The ID of the run this flamegraph belongs to.
-                  run_reason:
-                    type: string
-                    description: A reason for the run
-                  timestamp:
-                    type: string
-                    description: Timestamp of the run
-                    format: iso
-                  machine_info:
-                    type: string
-                    description: JSON string with machine information. Precisely one of `machine_info` and `cluster_info` must be provided.
-                  cluster_info:
-                    type: string
-                    description: JSON string with cluster information. Precisely one of `machine_info` and `cluster_info` must be provided.
-                  github:
-                    type: string
-                    description: JSON string with GitHub commit information.
+            application/json:
+              schema: FlamegraphCreate
         responses:
           201:
             description: Successfully uploaded
+          400: "400"
+          401: "401"
         tags:
           - Flamegraphs
         """
-        form_data = f.request.form.to_dict()
+        data = self.validate_flamegraph(self.schema.create)
 
-        if "file" not in f.request.files:
-            self.abort_400_bad_request("Flamegraph file missing")
-
-        file = f.request.files["file"]
-        if not file or not file.filename.endswith(".svg"):
-            self.abort_400_bad_request("File format must be an SVG")
-        timestamp = int(time.time())
-        save_path = os.path.join("/tmp/flamegraphs", f"{timestamp}_{file.filename}")
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        file.save(save_path)
-
-        data_dict = Flamegraph.validate_formdata(form_data)
-        flamegraph = Flamegraph.create(data_dict)
+        flamegraph = Flamegraph.create(data)
 
 
         return self.response_201_created(self.serializer.one.dump(flamegraph))
@@ -184,6 +153,45 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         pass
 
+    def post(self) -> f.Response:
+        """
+        ---
+        summary: Upload a flamegraph SVG file
+        description: |
+          Upload a Flamegraph SVG for a specific flamegraph result
+        requestBody:
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                required:
+                  - file
+                properties:
+                  file:
+                    type: string
+                    format: binary
+                    description: The SVG file of the flamegraph to upload.
+        responses:
+          201:
+            description: Successfully uploaded
+          404:
+            description: Flamegraph result not found
+        tags:
+          - Flamegraphs
+        """
+        if 'file' not in f.request.files:
+            return resp400("Flamegraph file is missing")
+        file = f.request.files['file']
+        if file.filename == '':
+            return resp400("Flamegraph file is missing")
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            # TODO: Maybe add check if file already exists and handle it accordingly
+            return self.get() # return the flamegraphs details after upload
+
+
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
 
@@ -196,7 +204,7 @@ rule(
 rule(
     "/flamegraphs/<flamegraph_result_id>/",
     view_func=flamegraphs_entity_view,
-    methods=["GET", "DELETE", "PUT"],
+    methods=["GET", "DELETE", "PUT", "POST"],
 )
 
 spec.components.schema(

@@ -43,7 +43,7 @@ class Flamegraph(Base, EntityMixin):
     # Name of the flamegraph, e.g. "Nexmark"
     name: Mapped[str] = mapped_column(String, nullable=False)
     # Path to the flamegraph file, from the directory where they are saved.
-    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=True)
     # An arbitrary string to group results by CI run. There are no assertions that this
     # string is non-empty.
     run_id: Mapped[str] = mapped_column(String, nullable=False)
@@ -62,6 +62,8 @@ class Flamegraph(Base, EntityMixin):
 
     hardware_id: Mapped[str] = NotNull(s.String(50), s.ForeignKey("hardware.id"))
     hardware: Mapped[Hardware] = relationship("Hardware", lazy="joined")
+    timestamp: Mapped[datetime] = NotNull(s.DateTime(timezone=False))
+
 
     @staticmethod
     def create(data_dict) -> "Flamegraph":
@@ -69,50 +71,75 @@ class Flamegraph(Base, EntityMixin):
         Create a Flamegraph entity from the provided data dictionary.
         This is assumed to be called after the form data has been validated using 'validate_formdata'.
         """
-        flamegraph = Flamegraph(**data_dict)
-        flamegraph.save()
+        result_data_for_db: Dict = {}
 
-    @staticmethod
-    def validate_formdata(formdata: Dict[str, Any]) -> Dict[str, Any]:
-        if formdata["cluster_info"] is not "" and formdata["machine_info"] is not "":
-            raise ValueError(
-                "Exactly one of `machine_info` and `cluster_info` must be provided."
-            )
-        elif formdata["cluster_info"] is not "":
-            hardware = Cluster.get_or_create(formdata["cluster_info"])
-        elif formdata["machine_info"] is not "":
-            hardware = Machine.get_or_create(formdata["machine_info"])
+        if "machine_info" in data_dict:
+            hardware = Machine.get_or_create(data_dict["machine_info"])
         else:
-            raise ValueError(
-                "Exactly one of `machine_info` and `cluster_info` must be provided."
-            )
+            hardware = Cluster.get_or_create(data_dict["cluster_info"])
 
-        if "github" not in formdata:
-            raise ValueError(
-                "GitHub commit information is required. Please provide `github` field."
-            )
-        user_given_commit_info: TypeCommitInfoGitHub = formdata["github"]
+        user_given_commit_info: TypeCommitInfoGitHub = data_dict["github"]
         repo_url = user_given_commit_info["repo_url"]
         commit = None
         if user_given_commit_info["commit_hash"] is not None:
             commit = commit_fetch_info_and_create_in_db_if_not_exists(
                 user_given_commit_info
             )
-        if "run_id" not in formdata:
+        result_data_for_db["file_path"] = None
+        result_data_for_db["name"] = data_dict["name"]
+        result_data_for_db["run_id"] = data_dict["run_id"]
+        result_data_for_db["run_reason"] = data_dict["run_reason"]
+        result_data_for_db["timestamp"] = data_dict["timestamp"]
+        result_data_for_db["hardware_id"] = hardware.id
+        result_data_for_db["commit_id"] = commit.id if commit else None
+        result_data_for_db["commit_repo_url"] = repo_url
+
+        flamegraph = Flamegraph(**result_data_for_db)
+        flamegraph.save()
+
+        return flamegraph
+
+    @staticmethod
+    def validate_data(data: Dict[str, Any]) -> Dict[str, Any]:
+        if "cluster_info" not in data and "machine_info" not in data:
+            raise ValueError(
+                "Exactly one of `machine_info` and `cluster_info` must be provided."
+            )
+        elif "cluster_info" in data:
+            hardware = Cluster.get_or_create(data["cluster_info"])
+        elif "machine_info" in data:
+            hardware = Machine.get_or_create(data["machine_info"])
+        else:
+            raise ValueError(
+                "Exactly one of `machine_info` and `cluster_info` must be provided."
+            )
+
+        if "github" not in data:
+            raise ValueError(
+                "GitHub commit information is required. Please provide `github` field."
+            )
+        user_given_commit_info: TypeCommitInfoGitHub = data["github"]
+        repo_url = user_given_commit_info["repo_url"]
+        commit = None
+        if user_given_commit_info["commit_hash"] is not None:
+            commit = commit_fetch_info_and_create_in_db_if_not_exists(
+                user_given_commit_info
+            )
+        if "run_id" not in data:
             raise ValueError("Run ID is required. Please provide `run_id` field.")
-        if "timestamp" not in formdata:
+        if "timestamp" not in data:
             timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         else:
             try:
-                datetime.strptime(formdata["timestamp"], "%Y-%m-%d %H:%M:%S UTC")
-                timestamp = formdata["timestamp"]
+                datetime.strptime(data["timestamp"], "%Y-%m-%d %H:%M:%S UTC")
+                timestamp = data["timestamp"]
             except ValueError:
                 raise ValueError(
                     "Timestamp must be in the format 'YYYY-MM-DD HH:MM:SS UTC'."
                 )
         return {
-            "run_id": formdata["run_id"],
-            "run_reason": formdata["run_reason"] if "run_reason" in formdata else None,
+            "run_id": data["run_id"],
+            "run_reason": data["run_reason"] if "run_reason" in data else None,
             "timestamp": timestamp,
             "hardware_id": hardware.id,
             "commit_id": commit.id if commit else None,
@@ -146,7 +173,6 @@ class Flamegraph(Base, EntityMixin):
 
 class _FlamegraphsCreateSchema(marshmallow.Schema):
     name = marshmallow.fields.String(required=True)
-    file = marshmallow.fields.Raw(required=True, metadata={"type": "file"})
     run_id = marshmallow.fields.String(
         required=True,
         metadata={
@@ -259,10 +285,11 @@ class _FlamegraphsCreateSchema(marshmallow.Schema):
 
 class FlamegraphFacadeSchema:
     create = _FlamegraphsCreateSchema()
+    #update = _FlamegraphsUpdateSchema()
 
 class _Serializer(EntitySerializer):
-    def _dump(self, benchmark_result):
-        return Flamegraph.to_dict_for_json_api()
+    def _dump(self, flamegraph):
+        return flamegraph.to_dict_for_json_api()
 
 class FlamegraphSerializer(EntitySerializer):
     one = _Serializer()
