@@ -20,7 +20,8 @@ from ..api import rule
 from ..api._endpoint import ApiEndpoint, maybe_login_required
 from ._resp import json_response_for_byte_sequence, resp400
 
-from ..dbsession import current_session  
+from ..dbsession import current_session
+from ..entities._entity import NotFound
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
 UPLOAD_FOLDER = 'static/flamegraphs'
@@ -132,9 +133,23 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         return self.response_201_created(self.serializer.one.dump(flamegraph))
 
 class FlamegraphEntityAPI(ApiEndpoint):
+    serializer = FlamegraphSerializer
+    schema = FlamegraphFacadeSchema
+
+    def _get(self, flamegraph_id):
+        try:
+            benchmark = Flamegraph.one(id=flamegraph_id)
+        except NotFound:
+            self.abort_404_not_found()
+        return benchmark
+
     def get(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
+        description: |
+            Get a specific Flamegraph result
+        resonses:
+
         parameters:
           - name: flamegraph_result_id
             in: path
@@ -142,7 +157,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
             schema:
               type: integer
         tags:
-          - Flamegraph
+          - Flamegraphs
         """
         query = select(Flamegraph).where(Flamegraph.id == flamegraph_result_id)
 
@@ -158,13 +173,23 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         pass
 
-    def delete(self) -> f.Response:
+    def delete(self, benchmark_result_id) -> f.Response:
         """
         ---
+        description: Delete a benchmark result.
+        responses:
+            "204": "204"
+            "401": "401"
+            "404": "404"
+        parameters:
+          - name: benchmark_result_id
+            in: path
+            schema:
+                type: string
         tags:
           - Flamegraphs
         """
-        pass
+        flamegraph = self._get()
 
     def post(self, flamegraph_result_id: int) -> f.Response:
         """

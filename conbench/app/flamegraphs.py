@@ -36,7 +36,3 @@ def flame_graphs():
     flamegraphs = current_session.scalars(query).all()
 
     return flask.render_template("flamegraphs.html", flamegraphs=flamegraphs, application=Config.APPLICATION_NAME, title="Flamegraphs")
-
-@app.route("/upload-flamegraph", methods=["GET", "POST"])
-def upload_fg():
-    return flask.render_template("uploadFlamegraphs.html")
