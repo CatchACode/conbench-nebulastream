@@ -37,17 +37,13 @@ class ViewFlamegraph(AppEndpoint):
 
         flamegraph = current_session.scalar(query)
 
-        with open('.' + flamegraph.file_path, 'r', encoding="utf-8") as f:
-            svg_content = f.read()
-
-
         # Render the template with the flamegraph data
         return self.render_template(
             "flamegraph.html",
             application=Config.APPLICATION_NAME,
             title="Flamegraph",
             flamegraph=flamegraph,
-            svg_content=svg_content
+            svg_url=flamegraph.file_path
         )
 
 

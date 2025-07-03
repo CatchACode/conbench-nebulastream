@@ -6,6 +6,7 @@ import os
 import time
 from typing import Dict, List, Tuple, TypedDict, TypeVar
 
+import flask
 import flask as f
 import numpy as np
 import numpy.polynomial
@@ -24,24 +25,27 @@ from ..dbsession import current_session
 from ..entities._entity import NotFound
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
-UPLOAD_FOLDER = 'static/flamegraphs'
+UPLOAD_FOLDER = '/conbench/static/flamegraphs/'
 ALLOWED_EXTENSIONS = {'svg'}
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 class FlamegraphValidationMixin:
     def validate_flamegraph(self, schema):
         return self.validate(schema)
 
+
 class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
-    
+
     def get(self) -> f.Response:
         """
         ---
@@ -90,7 +94,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
             next_page_cursor = flamegraph_results[-1].id
         else:
             next_page_cursor = None
-            
+
         jsonbytes: bytes = orjson.dumps(
             {
                 "data": [r.to_dict_for_json_api() for r in flamegraph_results],
@@ -100,7 +104,6 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         )
 
         return json_response_for_byte_sequence(jsonbytes, 200)
-
 
     def post(self):
         """
@@ -129,8 +132,8 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
 
         flamegraph = Flamegraph.create(data)
 
-
         return self.response_201_created(self.serializer.one.dump(flamegraph))
+
 
 class FlamegraphEntityAPI(ApiEndpoint):
     serializer = FlamegraphSerializer
@@ -233,18 +236,25 @@ class FlamegraphEntityAPI(ApiEndpoint):
             filename = secure_filename(file.filename)
             file.save(os.path.join(UPLOAD_FOLDER, filename))
 
-            query = select(Flamegraph).where(Flamegraph.id == flamegraph_result_id)
-            flamegraph = current_session.scalar(query)
-
-            flamegraph.file_path = f.url_for('static', filename="flamegraphs/"+filename)
+            flamegraph = self._get(flamegraph_result_id)
+            flamegraph.file_path = filename
             current_session.add(flamegraph)
             current_session.commit()
 
-            return self.get(flamegraph_result_id) # return the flamegraphs details after upload
-
+            return self.get(flamegraph_result_id)  # return the flamegraphs details after upload
 
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
+
+@app.route("/uploads/<name>")
+def download_file(name):
+    return flask.send_from_directory(UPLOAD_FOLDER, name)
+
+rule(
+    "/uploads/<name>",
+    endpoint="download_file",
+    build_only=True,
+)
 
 rule(
     "/flamegraphs/",

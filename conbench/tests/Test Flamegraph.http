@@ -46,14 +46,14 @@ Content-Type: application/json
 
 {
   "github": {
-    "branch": "string",
-    "commit": "string",
+    "branch": "CatchACode:klaas-sachen",
+    "commit": "58746edada6d5a1f689b374c9dce2c82e5dccc70",
     "pr_number": 0,
-    "repository": "https://github.com/nebulastream/nebulastream"
+    "repository": "https://github.com/CatchACode/conbench-nebulastream"
   },
   "machine_info": {
-    "architecture_name": "string",
-    "cpu_core_count": 0,
+    "architecture_name": "AMD x86_64",
+    "cpu_core_count": 8,
     "cpu_frequency_max_hz": 0,
     "cpu_l1d_cache_bytes": 0,
     "cpu_l1i_cache_bytes": 0,
@@ -63,7 +63,7 @@ Content-Type: application/json
     "cpu_thread_count": 0,
     "gpu_count": 0,
     "gpu_product_names": [
-      "string"
+      "NVIDIA"
     ],
     "kernel_name": "string",
     "memory_bytes": 0,
@@ -71,10 +71,10 @@ Content-Type: application/json
     "os_name": "string",
     "os_version": "string"
   },
-  "name": "string",
-  "run_id": "string",
-  "run_reason": "string",
-  "timestamp": "2025-07-02T17:01:03.214Z"
+  "name": "Random Benchmark name that isn't String",
+  "run_id": "AAAA-AAAA-AAAA-AAAA",
+  "run_reason": "HTTP Request from PyCharm",
+  "timestamp": "2025-08-02T17:01:03.214Z"
 }
 
 ###
