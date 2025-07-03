@@ -1,0 +1,19 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+
+# curl -X 'POST'   'http://127.0.0.1:5000/api/flamegraphs/3/'   -H 'accept: */*'   -H 'Content-Type: multipart/form-data'   -F 'file=@SVG_logo.svg;type=image/svg+xml'
+POST http://127.0.0.1:5000/api/flamegraphs/3/
+accept: */*
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="SVG_logo.svg"
+
+< SVG_logo.svg
+--WebAppBoundary--
+
+###
+
