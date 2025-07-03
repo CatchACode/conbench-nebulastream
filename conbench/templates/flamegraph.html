@@ -1,1 +1,28 @@
-<h1>Hello World</h1>
+{% extends "app.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% block app_content %}
+<div>
+    <strong> {{ flamegraph.name }} </strong>
+</div>
+<div class="row">
+    <div class="col-md-3 mt-3 p-3">
+        <h4>Summary</h4>
+        <div class="mt-3 cb-bm-summary small shadow-sm">
+           <div class="cb-bmr-summary-item">
+                <strong>Benchmark Date</strong>
+                <br>
+                <code> {{ flamegraph.timestamp.strftime("%Y-%m-%d") }}</code>
+           </div>
+        </div>
+    </div>
+    <div class="col-md-1"></div>
+    <div class="col-md-8 mt-3 p-3">
+        <h4>Flamegraph</h4>
+        {% if svg_content is none %}
+        <p>No flamegraph file found, has it been uploaded?</p>
+        {% else %}
+           {{ svg_content | safe }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

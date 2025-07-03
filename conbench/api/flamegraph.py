@@ -23,8 +23,11 @@ from ._resp import json_response_for_byte_sequence, resp400
 from ..dbsession import current_session  
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
-UPLOAD_FOLDER = '/tmp/flamegraphs'
+UPLOAD_FOLDER = 'static/flamegraphs'
 ALLOWED_EXTENSIONS = {'svg'}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -129,13 +132,23 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         return self.response_201_created(self.serializer.one.dump(flamegraph))
 
 class FlamegraphEntityAPI(ApiEndpoint):
-    def get(self) -> f.Response:
+    def get(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
+        parameters:
+          - name: flamegraph_result_id
+            in: path
+            required: true
+            schema:
+              type: integer
         tags:
-          - Flamegraphs
+          - Flamegraph
         """
-        pass
+        query = select(Flamegraph).where(Flamegraph.id == flamegraph_result_id)
+
+        flamegraph = current_session.scalar(query)
+
+        return flamegraph.to_dict_for_json_api()
 
     def put(self) -> f.Response:
         """
@@ -153,12 +166,18 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         pass
 
-    def post(self) -> f.Response:
+    def post(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
         summary: Upload a flamegraph SVG file
         description: |
           Upload a Flamegraph SVG for a specific flamegraph result
+        parameters:
+          - name: flamegraph_result_id
+            in: path
+            required: true
+            schema:
+              type: integer
         requestBody:
           required: true
           content:
@@ -188,8 +207,15 @@ class FlamegraphEntityAPI(ApiEndpoint):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(UPLOAD_FOLDER, filename))
-            # TODO: Maybe add check if file already exists and handle it accordingly
-            return self.get() # return the flamegraphs details after upload
+
+            query = select(Flamegraph).where(Flamegraph.id == flamegraph_result_id)
+            flamegraph = current_session.scalar(query)
+
+            flamegraph.file_path = f.url_for('static', filename="flamegraphs/"+filename)
+            current_session.add(flamegraph)
+            current_session.commit()
+
+            return self.get(flamegraph_result_id) # return the flamegraphs details after upload
 
 
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")

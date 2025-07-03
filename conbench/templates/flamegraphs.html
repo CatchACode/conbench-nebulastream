@@ -42,7 +42,7 @@
               {% for flamegraph in flamegraphs %}
                 <tr class="no-border">
                   <td>
-                    <code><a href="{{ url_for('app.flamegraph', run_id=flamegraph.run_id) }}">{{ flamegraph.time_for_table }}</a></code>
+                    <code><a href="{{ url_for('app.flamegraph', id=flamegraph.id) }}">{{ flamegraph.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") }}</a></code>
                   </td>
                   <!-- no efficient lookup built so far; can populate this from BMRT cache if we want to -->
                   <td>
@@ -54,7 +54,7 @@
                   </td>
                   <td>
                     <span class="table-entry text-truncate d-inline-block"
-                          style="max-width: 140px">{{ flamegraph.hardware_name }}</span>
+                          style="max-width: 140px">{{ flamegraph.hardware.name }}</span>
                   </td>
                   <td>
                     <div class="table-entry">
@@ -86,7 +86,7 @@
                       n/a
                     {% endif %}
                   </td>
-                  <td>{{ flamegraph.commit_message_short }}</td>
+                  <td>{{ flamegraph.ui_commit_short_msg() }}</td>
                 </tr>
               {% endfor %}
             </tbody>

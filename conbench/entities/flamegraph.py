@@ -170,6 +170,10 @@ class Flamegraph(Base, EntityMixin):
 
             return out_dict
 
+    def ui_commit_short_msg(self) -> str:
+        if self.commit is None:
+            return "n/a"
+        return conbench.util.short_commit_msg(self.commit.message)
 
 class _FlamegraphsCreateSchema(marshmallow.Schema):
     name = marshmallow.fields.String(required=True)
