@@ -21,7 +21,7 @@
         {% if svg_content is none %}
         <p>No flamegraph file found, has it been uploaded?</p>
         {% else %}
-            <object data= {{ url_for('app.download_file', name=flamegraph.file_path) }}></object>
+            <object data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
         {% endif %}
     </div>
 

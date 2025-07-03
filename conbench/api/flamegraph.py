@@ -25,7 +25,7 @@ from ..dbsession import current_session
 from ..entities._entity import NotFound
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
-UPLOAD_FOLDER = '/conbench/static/flamegraphs/'
+UPLOAD_FOLDER = './conbench/static/flamegraphs/'
 ALLOWED_EXTENSIONS = {'svg'}
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -234,10 +234,11 @@ class FlamegraphEntityAPI(ApiEndpoint):
             return resp400("Flamegraph file is missing")
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(filepath)
 
             flamegraph = self._get(flamegraph_result_id)
-            flamegraph.file_path = filename
+            flamegraph.file_path = f"flamegraphs/{filename}"
             current_session.add(flamegraph)
             current_session.commit()
 
@@ -245,7 +246,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
 
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
-
+"""
 @app.route("/uploads/<name>")
 def download_file(name):
     return flask.send_from_directory(UPLOAD_FOLDER, name)
@@ -255,6 +256,7 @@ rule(
     endpoint="download_file",
     build_only=True,
 )
+"""
 
 rule(
     "/flamegraphs/",
