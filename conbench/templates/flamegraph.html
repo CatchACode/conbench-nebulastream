@@ -17,11 +17,11 @@
     </div>
     <div class="col-md-1"></div>
     <div class="col-md-8 mt-3 p-3">
-        <h4>Flamegraph</h4>
+        <h4 class="text-center">Flamegraph</h4>
         {% if svg_content is none %}
         <p>No flamegraph file found, has it been uploaded?</p>
         {% else %}
-            <object data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
+            <object  class="w-100" data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
         {% endif %}
     </div>
 
