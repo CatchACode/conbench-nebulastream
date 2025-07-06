@@ -84,6 +84,7 @@ def create_application(config) -> "flask.Flask":
     # Maybe change the test suite to init the app object only once.
     if app.config["TESTING"]:
         log.debug(log_cfg_msg)
+        app.config["TEMPLATES_AUTO_RELOAD"] = True
     else:
         log.info(log_cfg_msg)
 
