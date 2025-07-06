@@ -85,6 +85,8 @@ def create_application(config) -> "flask.Flask":
     if app.config["TESTING"]:
         log.debug(log_cfg_msg)
         app.config["TEMPLATES_AUTO_RELOAD"] = True
+        app.jinja_env.auto_reload = True
+        log.debug("Templates should be auto-reload")
     else:
         log.info(log_cfg_msg)
 
