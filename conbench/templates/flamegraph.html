@@ -1,9 +1,16 @@
 {% extends "app.html" %}
 {% import 'bootstrap/wtf.html' as wtf %}
 {% block app_content %}
-<div>
-    <strong> {{ flamegraph.name }} </strong>
+
+
+<div class="text-center mb-4">
+    <h1> {{ flamegraph.name }} </h1>
 </div>
+    {% if svg_content is none %}
+    <p>No flamegraph file found, has it been uploaded?</p>
+    {% else %}
+        <object  class="w-100" data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
+    {% endif %}
 <div class="row">
     <div class="col-md-3 mt-3 p-3">
         <h4>Summary</h4>
@@ -11,19 +18,9 @@
            <div class="cb-bmr-summary-item">
                 <strong>Benchmark Date</strong>
                 <br>
-                <code> {{ flamegraph.timestamp.strftime("%Y-%m-%d") }}</code>
+                <code> {{ flamegraph.timestamp.strftime("%Y-%m-%d") }} </code>
            </div>
         </div>
     </div>
-    <div class="col-md-1"></div>
-    <div class="col-md-8 mt-3 p-3">
-        <h4 class="text-center">Flamegraph</h4>
-        {% if svg_content is none %}
-        <p>No flamegraph file found, has it been uploaded?</p>
-        {% else %}
-            <object  class="w-100" data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
-        {% endif %}
-    </div>
-
 </div>
 {% endblock %}
