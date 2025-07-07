@@ -1,12 +1,10 @@
 {% extends "app.html" %}
 {% import 'bootstrap/wtf.html' as wtf %}
 {% block app_content %}
-
-
 <div class="text-center mb-4">
     <h1> {{ flamegraph.name }} </h1>
 </div>
-    {% if svg_content is none %}
+    {% if flamegraph.file_path is none %}
     <p>No flamegraph file found, has it been uploaded?</p>
     {% else %}
         <object  class="w-100" data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
