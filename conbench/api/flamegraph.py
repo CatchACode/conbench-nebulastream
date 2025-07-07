@@ -12,6 +12,7 @@ import numpy as np
 import numpy.polynomial
 import orjson
 import pandas as pd
+import uuid
 from sqlalchemy import select
 from conbench.app import app
 from werkzeug.utils import secure_filename
@@ -233,7 +234,9 @@ class FlamegraphEntityAPI(ApiEndpoint):
         if file.filename == '':
             return resp400("Flamegraph file is missing")
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+            filename_prefix = secure_filename(file.filename).split('.')[0]
+            filename_suffix = uuid.uuid4().hex
+            filename = filename_prefix + filename_suffix + ".svg"
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
 
