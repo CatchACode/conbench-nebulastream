@@ -3,6 +3,8 @@ import os
 import sys
 from typing import Optional
 
+UPLOAD_FOLDER = './conbench/static/'
+ALLOWED_EXTENSIONS = {'svg'}
 
 class ConfigClass:
     APPLICATION_NAME = os.environ.get("APPLICATION_NAME", "Conbench")

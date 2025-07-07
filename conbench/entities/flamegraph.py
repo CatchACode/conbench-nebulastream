@@ -1,9 +1,14 @@
+import os
+
 import marshmallow
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import sqlalchemy as s
 from datetime import datetime, timezone
+
+from ..config import UPLOAD_FOLDER
+from conbench.dbsession import current_session
 
 import conbench.util
 import conbench.units
@@ -63,6 +68,15 @@ class Flamegraph(Base, EntityMixin):
     hardware_id: Mapped[str] = NotNull(s.String(50), s.ForeignKey("hardware.id"))
     hardware: Mapped[Hardware] = relationship("Hardware", lazy="joined")
     timestamp: Mapped[datetime] = NotNull(s.DateTime(timezone=False))
+
+    def delete_flamegraph_svg(self):
+        filepath = os.path.join(UPLOAD_FOLDER, self.file_path)
+        os.remove(filepath)
+
+    def delete(self):
+        self.delete_flamegraph_svg()
+        current_session.delete(self)
+        current_session.commit()
 
 
     @staticmethod

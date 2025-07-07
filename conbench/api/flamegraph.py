@@ -26,8 +26,7 @@ from ..dbsession import current_session
 from ..entities._entity import NotFound
 from ..entities.flamegraph import Flamegraph, FlamegraphFacadeSchema, FlamegraphSerializer
 
-UPLOAD_FOLDER = './conbench/static/flamegraphs/'
-ALLOWED_EXTENSIONS = {'svg'}
+from ..config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -177,7 +176,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         pass
 
-    def delete(self, benchmark_result_id) -> f.Response:
+    def delete(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
         description: Delete a benchmark result.
@@ -193,7 +192,9 @@ class FlamegraphEntityAPI(ApiEndpoint):
         tags:
           - Flamegraphs
         """
-        flamegraph = self._get()
+        flamegraph = self._get(flamegraph_result_id)
+        flamegraph.delete()
+        return self.response_204_no_content()
 
     @maybe_login_required
     def post(self, flamegraph_result_id: int) -> f.Response:
@@ -238,11 +239,12 @@ class FlamegraphEntityAPI(ApiEndpoint):
             filename_prefix = secure_filename(file.filename).split('.')[0]
             filename_suffix = uuid.uuid4().hex
             filename = filename_prefix + filename_suffix + ".svg"
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
+            root_rel_filepath = os.path.join(UPLOAD_FOLDER, 'flamegraphs', filename)
+            upload_rel_filepath = os.path.join('flamegraphs', filename)
+            file.save(root_rel_filepath)
 
             flamegraph = self._get(flamegraph_result_id)
-            flamegraph.file_path = f"flamegraphs/{filename}"
+            flamegraph.file_path = upload_rel_filepath
             current_session.add(flamegraph)
             current_session.commit()
 
