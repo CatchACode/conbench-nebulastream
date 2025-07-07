@@ -36,9 +36,10 @@ class ViewFlamegraph(AppEndpoint):
         query = select(Flamegraph).where(Flamegraph.id == id)
 
         flamegraph = current_session.scalar(query)
-
-        hardware_dict = flamegraph.hardware.serialize()
-        hardware_dict.pop("links")
+        hardware_dict = None
+        if flamegraph:
+            hardware_dict = flamegraph.hardware.serialize()
+            hardware_dict.pop("links")
 
         # Render the template with the flamegraph data
         return self.render_template(
@@ -46,8 +47,7 @@ class ViewFlamegraph(AppEndpoint):
             application=Config.APPLICATION_NAME,
             title="Flamegraph",
             flamegraph=flamegraph,
-            hardware=hardware_dict,
-            svg_url=flamegraph.file_path
+            hardware=hardware_dict
         )
 
 

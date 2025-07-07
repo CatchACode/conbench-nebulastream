@@ -196,7 +196,6 @@ class FlamegraphEntityAPI(ApiEndpoint):
         flamegraph.delete()
         return self.response_204_no_content()
 
-    @maybe_login_required
     def post(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
@@ -244,6 +243,11 @@ class FlamegraphEntityAPI(ApiEndpoint):
             file.save(root_rel_filepath)
 
             flamegraph = self._get(flamegraph_result_id)
+
+            if flamegraph.file_path is not None or flamegraph.file_path is not "":
+                if os.path.exists(os.path.join(UPLOAD_FOLDER, flamegraph.file_path)):
+                    os.remove(os.path.join(UPLOAD_FOLDER, flamegraph.file_path))
+
             flamegraph.file_path = upload_rel_filepath
             current_session.add(flamegraph)
             current_session.commit()
