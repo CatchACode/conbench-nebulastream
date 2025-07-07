@@ -246,6 +246,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
             current_session.commit()
 
             return self.get(flamegraph_result_id)  # return the flamegraphs details after upload
+        return self.abort_400_bad_request("Invalid file type")
 
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
