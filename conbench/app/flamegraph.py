@@ -37,12 +37,16 @@ class ViewFlamegraph(AppEndpoint):
 
         flamegraph = current_session.scalar(query)
 
+        hardware_dict = flamegraph.hardware.serialize()
+        hardware_dict.pop("links")
+
         # Render the template with the flamegraph data
         return self.render_template(
             "flamegraph.html",
             application=Config.APPLICATION_NAME,
             title="Flamegraph",
             flamegraph=flamegraph,
+            hardware=hardware_dict,
             svg_url=flamegraph.file_path
         )
 

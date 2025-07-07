@@ -9,16 +9,103 @@
     {% else %}
         <object  class="w-100" data= {{ url_for('static', filename=flamegraph.file_path) }}></object>
     {% endif %}
-<div class="row">
-    <div class="col-md-3 mt-3 p-3">
-        <h4>Summary</h4>
-        <div class="mt-3 cb-bm-summary small shadow-sm">
-           <div class="cb-bmr-summary-item">
-                <strong>Benchmark Date</strong>
-                <br>
-                <code> {{ flamegraph.timestamp.strftime("%Y-%m-%d") }} </code>
-           </div>
-        </div>
+    <div class="row result-raw-data-container">
+    <div class="col-md-6">
+      <ul class="list-group">
+        <li class="list-group-item list-group-item-primary">overview</li>
+        <li class="list-group-item" style="overflow-y: auto;">
+          <b>Flamegraph Name</b>
+          <div align="right" style="display:inline-block; float: right;">
+            <code>{{ flamegraph.name }}</code>
+          </div>
+        </li>
+        <li class="list-group-item" style="overflow-y: auto;">
+          <b>Submitted as part of CI run</b>
+          <div align="right" style="display:inline-block; float: right;">
+            <a>{{ flamegraph.run_id }}</a>
+            <br>
+            name:
+            <code>
+              {% if flamegraph.name %}{{ flamegraph.name }}{% endif %}
+            </code>
+            <br>
+            reason:
+            <code>
+              {% if flamegraph.run_reason %}{{ flamegraph.run_reason }}{% endif %}
+            </code>
+          </div>
+        </li>
+        <li class="list-group-item" style="overflow-y: auto;">
+            <b>Benchmark Date</b>
+          <div align="right" style="display:inline-block; float: right;">
+            <code>{{ flamegraph.timestamp.strftime("%Y-%m-%d") }}</code>
+          </div>
+        </li>
     </div>
-</div>
+    <div class="col-md-6">
+      <ul class="list-group">
+        {% if flamegraph and flamegraph.commit.url %}
+          <li class="list-group-item list-group-item-primary">commit</li>
+          <li class="list-group-item" style="overflow-y: auto;">
+            commit
+            <div class="ellipsis-500"
+                 align="right"
+                 style="display:inline-block;
+                        float: right">
+              {% if flamegraph.commit.display_message %}
+                <a href="{{ flamegraph.commit.url }}">{{ flamegraph.commit.display_message }}</a>
+              {% else %}
+                <a href="{{ flamegraph.commit.url }}">{{ flamegraph.commit.sha }}</a>
+              {% endif %}
+            </div>
+          </li>
+          {% if flamegraph.commit.display_timestamp %}
+            <li class="list-group-item" style="overflow-y: auto;">
+              date
+              <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.display_timestamp }}</div>
+            </li>
+          {% endif %}
+          {% if flamegraph.commit.display_message %}
+            <li class="list-group-item" style="overflow-y: auto;">
+              author
+              <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.author_name }}</div>
+            </li>
+          {% endif %}
+          <li class="list-group-item" style="overflow-y: auto;">
+            repository
+            <div align="right" style="display:inline-block; float: right;">
+              <a href="{{ flamegraph.commit.repository }}">{{ flamegraph.commit.display_repository }}</a>
+            </div>
+          </li>
+          {% if flamegraph.commit.branch %}
+            <li class="list-group-item" style="overflow-y: auto;">
+              branch
+              <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.branch }}</div>
+            </li>
+          {% endif %}
+        {% endif %}
+        <li class="list-group-item list-group-item-primary">
+          platform/hardware
+          <sup><i class="bi bi-info-circle"
+   data-bs-toggle="tooltip"
+   data-bs-title="breaks history: checksum is constant among results in history plot above">
+          </i></sup>
+        </li>
+        <li class="list-group-item" style="overflow-y: auto;">
+          checksum
+          <div align="right" style="display:inline-block; float: right;">
+            <code>{{ flamegraph.hardware.hash }}</code>
+          </div>
+        </li>
+        {% for k,v in hardware.items() %}
+          <li class="list-group-item" style="overflow-y: auto;">
+            {{ k }}
+            <div align="right" style="display:inline-block; float: right;">
+              <code>{{ v }}</code>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
 {% endblock %}

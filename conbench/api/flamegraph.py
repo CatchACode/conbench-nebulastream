@@ -195,6 +195,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         flamegraph = self._get()
 
+    @maybe_login_required
     def post(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
