@@ -40,7 +40,7 @@ GET https://examples.http-client.intellij.net/get
 #  "run_reason": "string",
 #  "timestamp": "2025-07-02T17:01:03.214Z"
 #}'
-POST http://127.0.0.1:5000/api/flamegraphs/
+POST http://localhost:5000/api/flamegraphs/
 accept: */*
 Content-Type: application/json
 
@@ -71,7 +71,7 @@ Content-Type: application/json
     "os_name": "string",
     "os_version": "string"
   },
-  "name": "Random Benchmark name that isn't String",
+  "name": "filteredClusterMonitoringDebug",
   "run_id": "AAAA-AAAA-AAAA-AAAA",
   "run_reason": "HTTP Request from PyCharm",
   "timestamp": "2025-08-02T17:01:03.214Z"

@@ -12,8 +12,18 @@ Content-Type: multipart/form-data; boundary=WebAppBoundary
 --WebAppBoundary
 Content-Disposition: form-data; name="file"; filename="../../filteredClusterMonitoringDebug.svg"
 
-< filteredClusterMonitoringDebug.svg
+< SVG_logo.svg
 --WebAppBoundary--
 
 ###
 
+
+POST http://127.0.0.1:5000/api/flamegraphs/1/
+accept: */*
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="../../filteredClusterMonitoringDebug.test"
+
+< filteredClusterMonitoringDebug.svg
+--WebAppBoundary--
