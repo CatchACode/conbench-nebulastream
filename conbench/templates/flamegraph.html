@@ -41,9 +41,6 @@
             <code>{{ flamegraph.timestamp.strftime("%Y-%m-%d") }}</code>
           </div>
         </li>
-    </div>
-    <div class="col-md-6">
-      <ul class="list-group">
         {% if flamegraph and flamegraph.commit.commit_url %}
           <li class="list-group-item list-group-item-primary">commit</li>
           <li class="list-group-item" style="overflow-y: auto;">
@@ -84,6 +81,10 @@
             </li>
           {% endif %}
         {% endif %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <ul class="list-group">
         <li class="list-group-item list-group-item-primary">
           platform/hardware
           <sup><i class="bi bi-info-circle"
