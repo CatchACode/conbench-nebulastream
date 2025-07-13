@@ -36,6 +36,10 @@ class ViewFlamegraph(AppEndpoint):
         query = select(Flamegraph).where(Flamegraph.id == id)
 
         flamegraph = current_session.scalar(query)
+
+        if flamegraph is None:
+            return self.redirect("app.index")
+
         hardware_dict = None
         if flamegraph:
             hardware_dict = flamegraph.hardware.serialize()
