@@ -72,6 +72,7 @@ class Flamegraph(Base, EntityMixin):
     hardware: Mapped[Hardware] = relationship("Hardware", lazy="joined")
     timestamp: Mapped[datetime] = NotNull(s.DateTime(timezone=False))
 
+
     def delete_flamegraph_svg(self):
         filepath = os.path.join(UPLOAD_FOLDER, self.file_path)
         os.remove(filepath)
