@@ -44,7 +44,7 @@
     </div>
     <div class="col-md-6">
       <ul class="list-group">
-        {% if flamegraph and flamegraph.commit.url %}
+        {% if flamegraph and flamegraph.commit.commit_url %}
           <li class="list-group-item list-group-item-primary">commit</li>
           <li class="list-group-item" style="overflow-y: auto;">
             commit
@@ -52,20 +52,20 @@
                  align="right"
                  style="display:inline-block;
                         float: right">
-              {% if flamegraph.commit.display_message %}
-                <a href="{{ flamegraph.commit.url }}">{{ flamegraph.commit.display_message }}</a>
+              {% if flamegraph.commit.message %}
+                <a href="{{ flamegraph.commit.commit_url }}">{{ flamegraph.commit.message }}</a>
               {% else %}
-                <a href="{{ flamegraph.commit.url }}">{{ flamegraph.commit.sha }}</a>
+                <a href="{{ flamegraph.commit.commit_url }}">{{ flamegraph.commit.hash }}</a>
               {% endif %}
             </div>
           </li>
-          {% if flamegraph.commit.display_timestamp %}
+          {% if flamegraph.commit.timestamp %}
             <li class="list-group-item" style="overflow-y: auto;">
               date
-              <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.display_timestamp }}</div>
+              <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.timestamp.strftime("%Y-%m-%d") }}</div>
             </li>
           {% endif %}
-          {% if flamegraph.commit.display_message %}
+          {% if flamegraph.commit.message %}
             <li class="list-group-item" style="overflow-y: auto;">
               author
               <div align="right" style="display:inline-block; float: right;">{{ flamegraph.commit.author_name }}</div>
@@ -74,7 +74,7 @@
           <li class="list-group-item" style="overflow-y: auto;">
             repository
             <div align="right" style="display:inline-block; float: right;">
-              <a href="{{ flamegraph.commit.repository }}">{{ flamegraph.commit.display_repository }}</a>
+              <a href="{{ flamegraph.commit.repository }}">{{ '/'.join(flamegraph.commit.repository.split('github.com/')[1].split('/')[:2]) }}</a>
             </div>
           </li>
           {% if flamegraph.commit.branch %}

@@ -47,7 +47,7 @@ class ViewFlamegraph(AppEndpoint):
             application=Config.APPLICATION_NAME,
             title="Flamegraph",
             flamegraph=flamegraph,
-            hardware=hardware_dict
+            hardware=hardware_dict,
         )
 
 
