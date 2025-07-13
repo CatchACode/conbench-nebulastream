@@ -1,0 +1,24 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+# curl -X 'POST'
+#  'http://127.0.0.1:5000/api/login/'
+#  -H 'accept: */*'
+#  -H 'Content-Type: application/json'
+#  -d '{
+#  "email": "user@example.com",
+#  "password": "string"
+#}'
+POST http://localhost:5000/api/login/
+accept: */*
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "string"
+}
+
+###
+

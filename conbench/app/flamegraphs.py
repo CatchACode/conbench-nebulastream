@@ -3,9 +3,12 @@ import functools
 import logging
 import math
 import time
+from time import strftime
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple, TypedDict, TypeVar
 
 import flask
+from sqlalchemy import select
 import numpy as np
 import numpy.polynomial
 import orjson
@@ -18,32 +21,17 @@ from conbench.app import app
 from conbench.app._endpoint import authorize_or_terminate
 from conbench.bmrt import BMRTBenchmarkResult, TBenchmarkName, bmrt_cache
 from conbench.config import Config
+from conbench.dbsession import current_session
 from conbench.outlier import remove_outliers_by_iqrdist
+from conbench.entities.flamegraph import Flamegraph
 
-@app.route("/flamegraph")
+@app.route("/flamegraphs", methods=["GET"])
 def flame_graphs():
-    runs = [
-        {
-            "timestamp": "2025-06-01 10:00",
-            "result": "40",
-            "reason": "Nightly Benchmark",
-            "hardware": "Github Runner"
-        },
-        {
-            "timestamp": "2025-06-02 12:30",
-            "result": "1",
-            "reason": "Testing conbench hotfix",
-            "hardware": "Some Cool Machine"
-        },
-        {
-            "timestamp": "2025-06-03 09:15",
-            "result": "n/a",
-            "reason": "test",
-            "hardware": "Github Runner"
-        }
-    ]
-    return flask.render_template("flamegraphs.html", runs = runs)
+    """
+    This is the frontend app endpoint for viewing multiple flamegraphs as a table
+    """
 
-@app.route("/upload-flamegraph")
-def upload_fg():
-    return flask.render_template("uploadFlamegraphs.html")
+    query = select(Flamegraph).order_by(Flamegraph.run_id.desc()).limit(100)
+    flamegraphs = current_session.scalars(query).all()
+
+    return flask.render_template("flamegraphs.html", flamegraphs=flamegraphs, application=Config.APPLICATION_NAME, title="Flamegraphs")

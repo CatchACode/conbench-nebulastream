@@ -18,6 +18,7 @@ from .index import *  # noqa
 from .results import *  # type: ignore # noqa
 from .robots import *  # noqa
 from .runs import *  # noqa
+from .flamegraph import *
 
 # Note(JP): The asterisk globby import is difficult to work with. I think
 # before this next line of code there is a module-global name User. Then `from
