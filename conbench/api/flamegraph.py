@@ -1,20 +1,10 @@
-import collections
-import functools
-import logging
-import math
+import flask_login
 import os
-import time
-from typing import Dict, List, Tuple, TypedDict, TypeVar
 
-import flask
 import flask as f
-import numpy as np
-import numpy.polynomial
 import orjson
-import pandas as pd
 import uuid
 from sqlalchemy import select
-from conbench.app import app
 from werkzeug.utils import secure_filename
 
 from ..api._docs import spec
@@ -46,6 +36,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
 
+    @maybe_login_required
     def get(self) -> f.Response:
         """
         ---
@@ -105,6 +96,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
 
         return json_response_for_byte_sequence(jsonbytes, 200)
 
+    @flask_login.login_required
     def post(self):
         """
         ---
@@ -146,6 +138,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
             self.abort_404_not_found()
         return benchmark
 
+    @maybe_login_required
     def get(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
@@ -168,6 +161,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
 
         return flamegraph.to_dict_for_json_api()
 
+    @flask_login.login_required
     def put(self) -> f.Response:
         """
         ---
@@ -176,6 +170,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
         """
         pass
 
+    @flask_login.login_required
     def delete(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
@@ -196,6 +191,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
         flamegraph.delete()
         return self.response_204_no_content()
 
+    @flask_login.login_required
     def post(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
