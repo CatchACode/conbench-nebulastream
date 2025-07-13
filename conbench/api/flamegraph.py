@@ -240,7 +240,7 @@ class FlamegraphEntityAPI(ApiEndpoint):
 
             flamegraph = self._get(flamegraph_result_id)
 
-            if flamegraph.file_path is not None or flamegraph.file_path is not "":
+            if flamegraph.file_path is not None and flamegraph.file_path is not "":
                 if os.path.exists(os.path.join(UPLOAD_FOLDER, flamegraph.file_path)):
                     os.remove(os.path.join(UPLOAD_FOLDER, flamegraph.file_path))
 
