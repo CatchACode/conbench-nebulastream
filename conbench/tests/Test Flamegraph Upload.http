@@ -12,7 +12,7 @@ Content-Type: multipart/form-data; boundary=WebAppBoundary
 --WebAppBoundary
 Content-Disposition: form-data; name="file"; filename="../../filteredClusterMonitoringDebug.svg"
 
-< SVG_logo.svg
+< filteredClusterMonitoringDebug.svg
 --WebAppBoundary--
 
 ###

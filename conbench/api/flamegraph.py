@@ -33,9 +33,15 @@ class FlamegraphValidationMixin:
 
 
 class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
+    """
+    API that handles requests for all flamegraphs entities: get flamegraphs and create new one
+    """
+
+    # conbench utils for validation and serialization
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
 
+    # Annotations handle auth
     @maybe_login_required
     def get(self) -> f.Response:
         """
@@ -60,6 +66,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         tags:
           - Flamegraphs
         """
+        # Set query for table in view
         filters = []
         cursor_arg = f.request.args.get("cursor")
         if cursor_arg and cursor_arg != "null":
@@ -79,6 +86,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
             .order_by(Flamegraph.id.desc())
             .limit(page_size)
         )
+        # fetch entities
         flamegraph_results = current_session.scalars(query).all()
 
         if len(flamegraph_results) == page_size:
@@ -86,6 +94,7 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         else:
             next_page_cursor = None
 
+        # transform in json
         jsonbytes: bytes = orjson.dumps(
             {
                 "data": [r.to_dict_for_json_api() for r in flamegraph_results],
@@ -120,17 +129,28 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         tags:
           - Flamegraphs
         """
+
+        # validate data
         data = self.validate_flamegraph(self.schema.create)
 
+        # create entity
         flamegraph = Flamegraph.create(data)
 
+        # return created entity
         return self.response_201_created(self.serializer.one.dump(flamegraph))
 
 
+"""
+API that handles request corresponding to a single flamegraph entity
+"""
+
+
 class FlamegraphEntityAPI(ApiEndpoint):
+    # More conbench utils
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
 
+    # internal method to fetch entity by id
     def _get(self, flamegraph_id):
         try:
             benchmark = Flamegraph.one(id=flamegraph_id)
@@ -222,26 +242,35 @@ class FlamegraphEntityAPI(ApiEndpoint):
         if file.filename == '':
             return resp400("Flamegraph file is missing")
         if file and allowed_file(file.filename):
+
+            # create unique filename based on svg name and uuid
             filename_prefix = secure_filename(file.filename).split('.')[0]
             filename_suffix = uuid.uuid4().hex
             filename = filename_prefix + filename_suffix + ".svg"
+
+            # save to UPLOAD_FOLDER/flamegraphs/
             root_rel_filepath = os.path.join(UPLOAD_FOLDER, 'flamegraphs', filename)
             upload_rel_filepath = os.path.join('flamegraphs', filename)
             file.save(root_rel_filepath)
 
+            # Find entity
             flamegraph = self._get(flamegraph_result_id)
 
+            # Delete if updating path
             if flamegraph.file_path is not None and flamegraph.file_path is not "":
                 if os.path.exists(os.path.join(UPLOAD_FOLDER, flamegraph.file_path)):
                     os.remove(os.path.join(UPLOAD_FOLDER, flamegraph.file_path))
 
+            # update path
             flamegraph.file_path = upload_rel_filepath
             current_session.add(flamegraph)
             current_session.commit()
 
             return self.get(flamegraph_result_id)  # return the flamegraphs details after upload
-        return self.abort_400_bad_request("Invalid file type")
+        return self.abort_400_bad_request("Invalid file type")  # return if invalid file
 
+
+# Internal stuff so conbench registers views and routes
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
 

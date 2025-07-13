@@ -24,15 +24,18 @@ from conbench.outlier import remove_outliers_by_iqrdist
 from conbench.entities.flamegraph import Flamegraph
 from conbench.dbsession import current_session
 
-"""
-This is the frontend app endpoint for viewing a single flamegraph
-"""
-
 class ViewFlamegraph(AppEndpoint):
+    """
+    This is API that handles the frontend view of a single flamegraph
+    """
     decorators = [authorize_or_terminate]
 
     def get(self, id: int) -> flask.Response:
-
+        """
+        Renders the view of a single flamegraph
+        :param id: of flamegraph entity
+        :return: rendered template
+        """
         query = select(Flamegraph).where(Flamegraph.id == id)
 
         flamegraph = current_session.scalar(query)

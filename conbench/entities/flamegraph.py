@@ -42,6 +42,9 @@ from ..entities.hardware import (
 )
 
 class Flamegraph(Base, EntityMixin):
+    """
+    Flamegraph entity
+    """
     __tablename__ = "flamegraph"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -115,6 +118,11 @@ class Flamegraph(Base, EntityMixin):
 
     @staticmethod
     def validate_data(data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validates and potentially creates other entities required for instantiation of new flamegraph entity
+        :param data:
+        :return: Dict ready to use for creating flamegraph entity
+        """
         if "cluster_info" not in data and "machine_info" not in data:
             raise ValueError(
                 "Exactly one of `machine_info` and `cluster_info` must be provided."
@@ -161,6 +169,10 @@ class Flamegraph(Base, EntityMixin):
         }
 
     def to_dict_for_json_api(flamegraph, include_joins=True):
+        """
+        :param include_joins:
+        :return: Dict representation of flamegraph entity
+        """
         out_dict = {
             "id": flamegraph.id,
             "name": flamegraph.name,
@@ -190,6 +202,9 @@ class Flamegraph(Base, EntityMixin):
         return conbench.util.short_commit_msg(self.commit.message)
 
 class _FlamegraphsCreateSchema(marshmallow.Schema):
+    """
+    JSON Schema for creating a new Flamegraph
+    """
     name = marshmallow.fields.String(required=True)
     run_id = marshmallow.fields.String(
         required=True,
@@ -302,6 +317,9 @@ class _FlamegraphsCreateSchema(marshmallow.Schema):
     )
 
 class FlamegraphFacadeSchema:
+    """
+    Handles Schemas for backend API docs
+    """
     create = _FlamegraphsCreateSchema()
     #update = _FlamegraphsUpdateSchema()
 
@@ -310,5 +328,14 @@ class _Serializer(EntitySerializer):
         return flamegraph.to_dict_for_json_api()
 
 class FlamegraphSerializer(EntitySerializer):
+    """
+    For serializing Flamegraph entities. Either one() or many()
+    """
     one = _Serializer()
+    """
+    serialize a single flamegraph entity
+    """
     many = _Serializer(many=True)
+    """
+    serialize multiple flamegraph entities
+    """

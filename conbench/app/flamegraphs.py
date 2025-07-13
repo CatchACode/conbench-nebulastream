@@ -25,12 +25,11 @@ from conbench.dbsession import current_session
 from conbench.outlier import remove_outliers_by_iqrdist
 from conbench.entities.flamegraph import Flamegraph
 
-"""
-This is the frontend app endpoint for viewing multiple flamegraphs as a table
-"""
-
 @app.route("/flamegraphs", methods=["GET"])
 def flame_graphs():
+    """
+    This is the frontend app endpoint for viewing multiple flamegraphs as a table
+    """
 
     query = select(Flamegraph).order_by(Flamegraph.run_id.desc()).limit(100)
     flamegraphs = current_session.scalars(query).all()
