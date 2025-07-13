@@ -162,15 +162,6 @@ class FlamegraphEntityAPI(ApiEndpoint):
         return flamegraph.to_dict_for_json_api()
 
     @flask_login.login_required
-    def put(self) -> f.Response:
-        """
-        ---
-        tags:
-          - Flamegraphs
-        """
-        pass
-
-    @flask_login.login_required
     def delete(self, flamegraph_result_id: int) -> f.Response:
         """
         ---
