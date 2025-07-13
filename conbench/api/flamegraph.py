@@ -244,17 +244,6 @@ class FlamegraphEntityAPI(ApiEndpoint):
 
 flamegraph_list_view = FlamegraphListAPI.as_view("flamegraphs")
 flamegraphs_entity_view = FlamegraphEntityAPI.as_view("flamegraph")
-"""
-@app.route("/uploads/<name>")
-def download_file(name):
-    return flask.send_from_directory(UPLOAD_FOLDER, name)
-
-rule(
-    "/uploads/<name>",
-    endpoint="download_file",
-    build_only=True,
-)
-"""
 
 rule(
     "/flamegraphs/",
