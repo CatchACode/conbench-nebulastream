@@ -139,13 +139,10 @@ class FlamegraphListAPI(ApiEndpoint, FlamegraphValidationMixin):
         # return created entity
         return self.response_201_created(self.serializer.one.dump(flamegraph))
 
-
-"""
-API that handles request corresponding to a single flamegraph entity
-"""
-
-
 class FlamegraphEntityAPI(ApiEndpoint):
+    """
+    API that handles request corresponding to a single flamegraph entity
+    """
     # More conbench utils
     serializer = FlamegraphSerializer
     schema = FlamegraphFacadeSchema
