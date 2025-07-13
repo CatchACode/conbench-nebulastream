@@ -182,7 +182,7 @@ class Flamegraph(Base, EntityMixin):
             out_dict["commit"] = commit_dict
             out_dict["hardware"] = hard_ware_dict
 
-            return out_dict
+        return out_dict
 
     def ui_commit_short_msg(self) -> str:
         if self.commit is None:
