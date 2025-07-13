@@ -11,15 +11,14 @@ class ViewFlamegraph(AppEndpoint):
     This is API that handles the frontend view of a single flamegraph
     """
     decorators = [authorize_or_terminate]
-
     def get(self, id: int) -> flask.Response:
         """
         Renders the view of a single flamegraph
         :param id: of flamegraph entity
         :return: rendered template
         """
+        # retrieve data from DB
         query = select(Flamegraph).where(Flamegraph.id == id)
-
         flamegraph = current_session.scalar(query)
 
         if flamegraph is None:

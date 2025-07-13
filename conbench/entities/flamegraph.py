@@ -1,9 +1,8 @@
 import os
-
 import marshmallow
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from sqlalchemy import Integer, String
+from typing import Any, Dict, Optional
 import sqlalchemy as s
 from datetime import datetime, timezone
 
@@ -13,23 +12,19 @@ from conbench.dbsession import current_session
 import conbench.util
 import conbench.units
 from .benchmark_result import commit_fetch_info_and_create_in_db_if_not_exists, SchemaGitHubCreate
-from .hardware import HardwareSerializer
 from ..entities._entity import (
     Base,
     EntityMixin,
     EntitySerializer,
     NotNull,
     Nullable,
-    genprimkey,
-    to_float,
+
 )
 
 from ..entities.commit import (
     Commit,
     CommitSerializer,
     TypeCommitInfoGitHub,
-    backfill_default_branch_commits,
-    get_github_commit_metadata,
 )
 
 from ..entities.hardware import (
@@ -204,7 +199,7 @@ class Flamegraph(Base, EntityMixin):
 
 class _FlamegraphsCreateSchema(marshmallow.Schema):
     """
-    JSON Schema for creating a new Flamegraph
+    Describes the Schema
     """
     name = marshmallow.fields.String(required=True)
     run_id = marshmallow.fields.String(
