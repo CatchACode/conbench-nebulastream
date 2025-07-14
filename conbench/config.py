@@ -6,6 +6,12 @@ from typing import Optional
 UPLOAD_FOLDER = './conbench/static/'
 ALLOWED_EXTENSIONS = {'svg'}
 
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+if not os.path.exists(os.path.join(UPLOAD_FOLDER, 'flamegraphs')):
+        os.makedirs(os.path.join(UPLOAD_FOLDER, 'flamegraphs'))
+
 class ConfigClass:
     APPLICATION_NAME = os.environ.get("APPLICATION_NAME", "Conbench")
     DB_HOST = os.environ.get("DB_HOST", "localhost")
